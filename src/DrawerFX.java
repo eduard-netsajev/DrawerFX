@@ -191,7 +191,7 @@ public class DrawerFX extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        primaryStage.setTitle("Kimp");
+        primaryStage.setTitle("DrawerFX");
         final BorderPane root = new BorderPane();
         Scene scene = new Scene(root, SCENE_WIDTH, SCENE_HEIGHT);
         canvas = new Pane();
@@ -378,7 +378,7 @@ public class DrawerFX extends Application {
             if (dirMode) {
                 if (me.getButton() == MouseButton.SECONDARY
                         && me.getSource() instanceof Shape) {
-                    buffer[currentAction] = new EraseAction((Shape)
+                    buffer[currentAction] = new EraseAction(canvas, (Shape)
                             me.getSource());
                     canvas.getChildren().remove(me.getSource());
                     currentAction++;
@@ -396,7 +396,7 @@ public class DrawerFX extends Application {
                 double a = sampleLine.getStrokeWidth() / 2.0;
                 Rectangle point = new Rectangle(me.getX() - a,
                         me.getY() - a, a * 2.0, a * 2.0);
-                buffer[currentAction] = new DrawAction(point);
+                buffer[currentAction] = new DrawAction(canvas, point);
                 currentAction++;
                 maxAction = currentAction;
                 point.setFill(sampleLine.getStroke());
@@ -447,9 +447,10 @@ public class DrawerFX extends Application {
 
                 if (me.getSource() instanceof Shape
                         && buffer[currentAction - 1] instanceof MoveAction) {
+
+                    Point2D newPoint = new Point2D(newTranslateX, newTranslateY);
                     MoveAction ma = (MoveAction) buffer[currentAction - 1];
-                    ma.newX = newTranslateX;
-                    ma.newY = newTranslateY;
+                    ma.setNewPoint(newPoint);
                 }
             } else {
                 drawingShape = true;
@@ -599,28 +600,15 @@ public class DrawerFX extends Application {
                 orgSceneX = me.getSceneX();
                 orgSceneY = me.getSceneY();
 
-                if (me.getSource() instanceof Rectangle) {
-                    orgTranslateX = ((Rectangle)
-                            (me.getSource())).getTranslateX();
-                    orgTranslateY = ((Rectangle)
-                            (me.getSource())).getTranslateY();
-                } else if (me.getSource() instanceof Path) {
-                    orgTranslateX = ((Path) (me.getSource())).getTranslateX();
-                    orgTranslateY = ((Path) (me.getSource())).getTranslateY();
-                } else if (me.getSource() instanceof Circle) {
-                    orgTranslateX = ((Circle) (me.getSource())).getTranslateX();
-                    orgTranslateY = ((Circle) (me.getSource())).getTranslateY();
-                } else if (me.getSource() instanceof Line) {
-                    orgTranslateX = ((Line) (me.getSource())).getTranslateX();
-                    orgTranslateY = ((Line) (me.getSource())).getTranslateY();
-                } else if (me.getSource() instanceof Ellipse) {
-                    orgTranslateX = ((Ellipse) (me.getSource())).getTranslateX();
-                    orgTranslateY = ((Ellipse) (me.getSource())).getTranslateY();
-                }
                 if (me.getSource() instanceof Shape) {
+
+                    orgTranslateX = ((Shape) me.getSource()).getTranslateX();
+                    orgTranslateX = ((Shape) me.getSource()).getTranslateY();
+
+                    Point2D oldPoint = new Point2D(orgTranslateX, orgTranslateY);
                     MoveAction ma = new MoveAction((Shape) me.getSource());
-                    ma.oldX = orgTranslateX;
-                    ma.oldY = orgTranslateY;
+                    ma.setOldPoint(oldPoint);
+
                     buffer[currentAction] = ma;
                     currentAction++;
                     maxAction = currentAction;
@@ -631,7 +619,7 @@ public class DrawerFX extends Application {
 
                     path = new Path();
 
-                    buffer[currentAction] = new DrawAction(path);
+                    buffer[currentAction] = new DrawAction(canvas, path);
                     currentAction++;
                     maxAction = currentAction;
 
@@ -665,7 +653,7 @@ public class DrawerFX extends Application {
                     }
                     canvas.getChildren().add(rect);
 
-                    buffer[currentAction] = new DrawAction(rect);
+                    buffer[currentAction] = new DrawAction(canvas, rect);
                     currentAction++;
                     maxAction = currentAction;
 
@@ -687,7 +675,7 @@ public class DrawerFX extends Application {
                         circ.setStrokeWidth(sampleLine.getStrokeWidth());
                     }
                     canvas.getChildren().add(circ);
-                    buffer[currentAction] = new DrawAction(circ);
+                    buffer[currentAction] = new DrawAction(canvas, circ);
                     currentAction++;
                     maxAction = currentAction;
 
@@ -707,7 +695,7 @@ public class DrawerFX extends Application {
                     line.setStrokeWidth(sampleLine.getStrokeWidth());
                     line.setStroke(sampleLine.getStroke());
                     canvas.getChildren().add(line);
-                    buffer[currentAction] = new DrawAction(line);
+                    buffer[currentAction] = new DrawAction(canvas, line);
                     currentAction++;
                     maxAction = currentAction;
 
@@ -732,7 +720,7 @@ public class DrawerFX extends Application {
                         ellipse.setStrokeWidth(sampleLine.getStrokeWidth());
                     }
                     canvas.getChildren().add(ellipse);
-                    buffer[currentAction] = new DrawAction(ellipse);
+                    buffer[currentAction] = new DrawAction(canvas, ellipse);
                     currentAction++;
                     maxAction = currentAction;
 
@@ -757,7 +745,7 @@ public class DrawerFX extends Application {
                         square.setStrokeWidth(sampleLine.getStrokeWidth());
                     }
                     canvas.getChildren().add(square);
-                    buffer[currentAction] = new DrawAction(square);
+                    buffer[currentAction] = new DrawAction(canvas, square);
                     currentAction++;
                     maxAction = currentAction;
 
@@ -796,18 +784,8 @@ public class DrawerFX extends Application {
      * Mouse event handler for MouseEvent.MouseEvent.MOUSE_ENTERED events.
      */
     EventHandler<MouseEvent> enterHandler = me -> {
-        if (dirMode) {
-            if (me.getSource() instanceof Rectangle) {
-                ((Rectangle) me.getSource()).setEffect(shadow);
-            } else if (me.getSource() instanceof Path) {
-                ((Path) me.getSource()).setEffect(shadow);
-            } else if (me.getSource() instanceof Circle) {
-                ((Circle) me.getSource()).setEffect(shadow);
-            } else if (me.getSource() instanceof Line) {
-                ((Line) me.getSource()).setEffect(shadow);
-            } else if (me.getSource() instanceof Ellipse) {
-                ((Ellipse) me.getSource()).setEffect(shadow);
-            }
+        if (dirMode && me.getSource() instanceof Shape) {
+            ((Shape) me.getSource()).setEffect(shadow);
         }
     };
 
@@ -815,17 +793,8 @@ public class DrawerFX extends Application {
      * Mouse event handler for MouseEvent.MouseEvent.MOUSE_EXITED events.
      */
     EventHandler<MouseEvent> exitHandler = me -> {
-        if (me.getSource() instanceof Rectangle) {
-            ((Rectangle) me.getSource()).setEffect(null);
-        } else if (me.getSource() instanceof Path) {
-            ((Path) me.getSource()).setEffect(null);
-        } else if (me.getSource() instanceof Circle) {
-            ((Circle) me.getSource()).setEffect(null);
-        } else if (me.getSource() instanceof Line) {
-            ((Line) me.getSource()).setEffect(null);
-        } else if (me.getSource() instanceof Ellipse) {
-            ((Ellipse) me.getSource()).setEffect(null);
-        }
+        if (me.getSource() instanceof Shape)
+            ((Shape) me.getSource()).setEffect(null);
     };
 
     /**
@@ -834,18 +803,7 @@ public class DrawerFX extends Application {
     private void redo() {
         if (currentAction < maxAction) {
             Action action = buffer[currentAction];
-            if (action instanceof DrawAction) {
-                DrawAction dA = (DrawAction) action;
-                canvas.getChildren().add(dA.shape);
-            } else if (action instanceof EraseAction) {
-                EraseAction dA = (EraseAction) action;
-                canvas.getChildren().remove(dA.shape);
-            } else if (action instanceof MoveAction) {
-                MoveAction dA = (MoveAction) action;
-                Shape shape = dA.shape;
-                shape.setTranslateX(dA.newX);
-                shape.setTranslateY(dA.newY);
-            }
+            action.redo();
             currentAction++;
         }
     }
@@ -857,85 +815,7 @@ public class DrawerFX extends Application {
         if (currentAction > 0) {
             currentAction--;
             Action action = buffer[currentAction];
-            if (action instanceof DrawAction) {
-                DrawAction dA = (DrawAction) action;
-                canvas.getChildren().remove(dA.shape);
-            } else if (action instanceof EraseAction) {
-                EraseAction dA = (EraseAction) action;
-                canvas.getChildren().add(dA.shape);
-            } else if (action instanceof MoveAction) {
-                MoveAction dA = (MoveAction) action;
-                Shape shape = dA.shape;
-                shape.setTranslateX(dA.oldX);
-                shape.setTranslateY(dA.oldY);
-            }
+            action.undo();
         }
-    }
-}
-
-/**
- * General Action interface for holding different actions together.
- */
-interface Action { }
-
-/**
- * Class for action of drawing a shape.
- */
-class DrawAction implements Action {
-
-    /**
-     * Shape that was drawn.
-     */
-    Shape shape;
-
-    /**
-     * Constructor of the DrawAction object.
-     * @param newShape Shape that was drawn.
-     */
-    public DrawAction(Shape newShape) {
-        shape = newShape;
-    }
-}
-
-/**
- * Class for action of erasing a shape.
- */
-class EraseAction implements Action {
-
-    /**
-     * Shape that was erased.
-     */
-    Shape shape;
-
-    /**
-     * Constructor of the EraseAction object.
-     * @param newShape Shape that was erased.
-     */
-    public EraseAction(Shape newShape) {
-        shape = newShape;
-    }
-}
-
-/**
- * Class for action of moving a shape.
- */
-class MoveAction implements Action {
-
-    /**
-     * Shape that was moved.
-     */
-    Shape shape;
-
-    /**
-     * Shape old and new coordinates.
-     */
-    double oldX, oldY, newX, newY;
-
-    /**
-     * Constructor of the MoveAction object.
-     * @param newShape Shape that was moved.
-     */
-    public MoveAction(Shape newShape) {
-        shape = newShape;
     }
 }
