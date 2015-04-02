@@ -57,7 +57,7 @@ public class DrawerFX extends Application {
      */
     private Rectangle rect;
 
-    private Circle circ;
+    private Circle circle;
 
     private Line line;
 
@@ -160,34 +160,9 @@ public class DrawerFX extends Application {
     private static final int SCENE_HEIGHT = 1000;
 
     /**
-     * Integer value of 10.
-     */
-    private static final int TEN = 10;
-
-    /**
-     * Integer value of 5.
-     */
-    private static final int FIVE = 5;
-
-    /**
-     * Integer value of 77.
-     */
-    private static final int SEVEN_SEVEN = 77;
-
-    /**
      * Action objects array - buffer.
      */
-    private Action[] buffer = new Action[TEN * TEN * TEN * TEN];
-
-    /**
-     * Integer value used to navigate in buffer.
-     */
-    private int maxAction = 0;
-
-    /**
-     * Integer value used to navigate in buffer.
-     */
-    private int currentAction = 0;
+    private EditHistoryBuffer buffer = new EditHistoryBuffer();
 
     @Override
     public void start(Stage primaryStage) {
@@ -211,7 +186,7 @@ public class DrawerFX extends Application {
         toggleButtonStroke.setToggleGroup(modeChoice);
         toggleRectangular.setToggleGroup(modeChoice);
 
-        VBox toggleBox2 = new VBox(TEN);
+        VBox toggleBox2 = new VBox(10);
 
         toggleButtonCircle = new ToggleButton("Circle");
         toggleButtonCircle.setToggleGroup(modeChoice);
@@ -226,11 +201,11 @@ public class DrawerFX extends Application {
         toggleButtonEllipse.setToggleGroup(modeChoice);
 
         // VBox for the toggle buttons
-        VBox toggleBox = new VBox(TEN);
+        VBox toggleBox = new VBox(10);
         toggleBox.getChildren().addAll(toggleButtonStroke, toggleRectangular, toggleButtonEllipse);
         toggleBox2.getChildren().addAll(toggleButtonLine, toggleButtonSquare, toggleButtonCircle);
         // VBox for the buffer buttons
-        VBox bufferBox = new VBox(TEN);
+        VBox bufferBox = new VBox(10);
         Button undoButton = new Button("Undo");
         undoButton.setOnAction(event -> undo());
 
@@ -262,33 +237,33 @@ public class DrawerFX extends Application {
         Slider strokeSlider = new Slider(MINSTROKE, MAXSTROKE, DEFAULTSTROKE);
         Label labelStroke = new Label("Stroke Width");
         fillBox = new CheckBox("Fill");
-        VBox utilBox = new VBox(TEN);
+        VBox utilBox = new VBox(10);
         utilBox.setAlignment(Pos.TOP_CENTER);
         utilBox.getChildren().addAll(btnClear, labelStroke, strokeSlider, fillBox);
 
         // Build the RGB sliders, labels, and HBox containers
         Slider redSlider = new Slider(MINRGB, MAXRGB, DEFAULTRED);
         Label labelRed = new Label("R");
-        HBox rhbox = new HBox(FIVE);
+        HBox rhbox = new HBox(5);
         rhbox.getChildren().addAll(labelRed, redSlider);
 
         Slider greenSlider = new Slider(MINRGB, MAXRGB, DEFAULTGREEN);
         Label labelGreen = new Label("G");
-        HBox ghbox = new HBox(FIVE);
+        HBox ghbox = new HBox(5);
         ghbox.getChildren().addAll(labelGreen, greenSlider);
 
         Slider blueSlider = new Slider(MINRGB, MAXRGB, DEFAULTBLUE);
         Label labelBlue = new Label("B");
-        HBox bhbox = new HBox(FIVE);
+        HBox bhbox = new HBox(5);
         bhbox.getChildren().addAll(labelBlue, blueSlider);
 
         // Build the VBox container for all the slider containers        
-        VBox colorBox = new VBox(TEN);
+        VBox colorBox = new VBox(10);
         colorBox.setAlignment(Pos.TOP_CENTER);
         colorBox.getChildren().addAll(rhbox, ghbox, bhbox);
 
         // Put all controls in one HBox
-        HBox toolBox = new HBox(SEVEN_SEVEN);
+        HBox toolBox = new HBox(75);
         toolBox.setAlignment(Pos.TOP_CENTER);
         toolBox.getChildren().addAll(bufferBox, toggleBox, toggleBox2,
                 utilBox, colorBox);
@@ -308,7 +283,7 @@ public class DrawerFX extends Application {
             }
         };
         // Build the sample line and its layout container
-        sampleLine = new Line(0, 0, SEVEN_SEVEN * 2, 0);
+        sampleLine = new Line(0, 0, 150, 0);
         sampleLine.strokeWidthProperty().bind(strokeSlider.valueProperty());
         StackPane stackpane = new StackPane();
         stackpane.setPrefHeight(MAXSTROKE);
@@ -323,32 +298,11 @@ public class DrawerFX extends Application {
 
         scene.setOnKeyPressed(ke -> {
             if (ke.getCode() == KeyCode.ESCAPE) {
-                if (currentAction > 0) {
-                    undo();
-                } else {
-                    Stage stage = new Stage();
-                    stage.setTitle("Exit Confirmation");
-                    // Set a scene with a button in the stage
-                    VBox pane = new VBox(TEN);
-                    Label question = new Label("Are you sure you want to leave"
-                            + " the program?");
-                    HBox choice = new HBox(TEN);
-                    Button yes = new Button("Yes");
-                    Button no = new Button("No");
-                    no.setOnAction(event -> stage.close());
-                    yes.setOnAction(event -> System.exit(0));
-                    choice.getChildren().addAll(yes, no);
-                    pane.getChildren().addAll(question, choice);
-                    BorderPane pp = new BorderPane();
-                    pp.setCenter(pane);
-                    stage.setScene(new Scene(pp));
-                    stage.show();
-                }
+                undo();
+            } else if (ke.getCode() == KeyCode.SPACE) {
+                redo();
             } else if (ke.getCode() == KeyCode.CONTROL) {
                 dirMode = true;
-            } else if (ke.getCode() == KeyCode.SPACE) {
-                ke.consume();
-                redo();
             }
         });
         scene.setOnKeyReleased(ke -> {
@@ -357,10 +311,10 @@ public class DrawerFX extends Application {
             }
         });
         // Build the VBox container for the toolBox and sampleline
-        VBox vb = new VBox(TEN * 2);
-        vb.setPrefWidth(scene.getWidth() - TEN * 2);
-        vb.setLayoutY(TEN * 2);
-        vb.setLayoutX(TEN);
+        VBox vb = new VBox(20);
+        vb.setPrefWidth(scene.getWidth() - 20);
+        vb.setLayoutY(20);
+        vb.setLayoutX(10);
         vb.getChildren().addAll(toolBox, stackpane);
         root.setTop(vb);
         //root.getChildren().addAll(shapes);
@@ -378,11 +332,9 @@ public class DrawerFX extends Application {
             if (dirMode) {
                 if (me.getButton() == MouseButton.SECONDARY
                         && me.getSource() instanceof Shape) {
-                    buffer[currentAction] = new EraseAction(canvas, (Shape)
-                            me.getSource());
-                    canvas.getChildren().remove(me.getSource());
-                    currentAction++;
-                    maxAction = currentAction;
+                    Shape shape = (Shape) me.getSource();
+                    canvas.getChildren().remove(shape);
+                    buffer.addAction(new EraseAction(canvas, shape));
                 }
             } else {
                 if (me.getButton() != MouseButton.PRIMARY) {
@@ -396,9 +348,7 @@ public class DrawerFX extends Application {
                 double a = sampleLine.getStrokeWidth() / 2.0;
                 Rectangle point = new Rectangle(me.getX() - a,
                         me.getY() - a, a * 2.0, a * 2.0);
-                buffer[currentAction] = new DrawAction(canvas, point);
-                currentAction++;
-                maxAction = currentAction;
+                buffer.addAction(new DrawAction(canvas, point));
                 point.setFill(sampleLine.getStroke());
                 point.setOnMousePressed(pressHandler);
                 point.setOnMouseDragged(drugHandler);
@@ -420,37 +370,21 @@ public class DrawerFX extends Application {
                 return;
             }
             if (dirMode) {
-                double offsetX = me.getSceneX() - orgSceneX;
-                double offsetY = me.getSceneY() - orgSceneY;
-                double newTranslateX = orgTranslateX + offsetX;
-                double newTranslateY = orgTranslateY + offsetY;
+                if (me.getSource() instanceof Shape) {
+                    double offsetX = me.getSceneX() - orgSceneX;
+                    double offsetY = me.getSceneY() - orgSceneY;
+                    double newTranslateX = orgTranslateX + offsetX;
+                    double newTranslateY = orgTranslateY + offsetY;
 
-                if (me.getSource() instanceof Rectangle) {
-                    ((Rectangle) (me.getSource())).setTranslateX(newTranslateX);
-                    ((Rectangle) (me.getSource())).setTranslateY(newTranslateY);
-                } else if (me.getSource() instanceof Path) {
-                    ((Path) (me.getSource())).setTranslateX(newTranslateX);
-                    ((Path) (me.getSource())).setTranslateY(newTranslateY);
-                } else if (me.getSource() instanceof Circle) {
-                    ((Circle) (me.getSource())).setTranslateX(newTranslateX);
-                    ((Circle) (me.getSource())).setTranslateY(newTranslateY);
-                } else if (me.getSource() instanceof Line) {
-                    ((Line) (me.getSource())).setTranslateX(newTranslateX);
-                    ((Line) (me.getSource())).setTranslateY(newTranslateY);
-                } else if (me.getSource() instanceof Ellipse) {
-                    ((Ellipse) (me.getSource())).setTranslateX(newTranslateX);
-                    ((Ellipse) (me.getSource())).setTranslateY(newTranslateY);
-                } else if (me.getSource() instanceof Polygon) {
-                    ((Polygon) (me.getSource())).setTranslateX(newTranslateX);
-                    ((Polygon) (me.getSource())).setTranslateY(newTranslateY);
-                }
+                    ((Shape) me.getSource()).setTranslateX(newTranslateX);
+                    ((Shape) me.getSource()).setTranslateY(newTranslateY);
 
-                if (me.getSource() instanceof Shape
-                        && buffer[currentAction - 1] instanceof MoveAction) {
-
-                    Point2D newPoint = new Point2D(newTranslateX, newTranslateY);
-                    MoveAction ma = (MoveAction) buffer[currentAction - 1];
-                    ma.setNewPoint(newPoint);
+                    Action previousAction = buffer.peekPreviousAction();
+                    if (previousAction instanceof MoveAction) {
+                        Point2D newPoint = new Point2D(newTranslateX, newTranslateY);
+                        MoveAction ma = (MoveAction) previousAction;
+                        ma.setNewPoint(newPoint);
+                    }
                 }
             } else {
                 drawingShape = true;
@@ -490,28 +424,28 @@ public class DrawerFX extends Application {
                         }
                     }
 
-                } else if (modeChoice.getSelectedToggle() == toggleButtonCircle && circ != null) {
+                } else if (modeChoice.getSelectedToggle() == toggleButtonCircle && circle != null) {
 
                     double meX = me.getX();
                     double meY = me.getY();
 
                     if (rsX < meX) {
-                        circ.setCenterX(rsX + (meX - rsX) / 2);
+                        circle.setCenterX(rsX + (meX - rsX) / 2);
                         if (rsY < meY) {
-                            circ.setCenterY(rsY + (meY - rsY) / 2);
-                            circ.setRadius(Math.max(meX - circ.getCenterX(), meY - circ.getCenterY()));
+                            circle.setCenterY(rsY + (meY - rsY) / 2);
+                            circle.setRadius(Math.max(meX - circle.getCenterX(), meY - circle.getCenterY()));
                         } else {
-                            circ.setCenterY(meY + (rsY - meY) / 2);
-                            circ.setRadius(Math.max(meX - circ.getCenterX(), rsY - circ.getCenterY()));
+                            circle.setCenterY(meY + (rsY - meY) / 2);
+                            circle.setRadius(Math.max(meX - circle.getCenterX(), rsY - circle.getCenterY()));
                         }
                     } else {
-                        circ.setCenterX(meX + (rsX - meX) / 2);
+                        circle.setCenterX(meX + (rsX - meX) / 2);
                         if (rsY < meY) {
-                            circ.setCenterY(rsY + (meY - rsY) / 2);
-                            circ.setRadius(Math.max(rsX - circ.getCenterX(), meY - circ.getCenterY()));
+                            circle.setCenterY(rsY + (meY - rsY) / 2);
+                            circle.setRadius(Math.max(rsX - circle.getCenterX(), meY - circle.getCenterY()));
                         } else {
-                            circ.setCenterY(meY + (rsY - meY) / 2);
-                            circ.setRadius(Math.max(rsX - circ.getCenterX(), rsY - circ.getCenterY()));
+                            circle.setCenterY(meY + (rsY - meY) / 2);
+                            circle.setRadius(Math.max(rsX - circle.getCenterX(), rsY - circle.getCenterY()));
                         }
                     }
 
@@ -603,15 +537,13 @@ public class DrawerFX extends Application {
                 if (me.getSource() instanceof Shape) {
 
                     orgTranslateX = ((Shape) me.getSource()).getTranslateX();
-                    orgTranslateX = ((Shape) me.getSource()).getTranslateY();
+                    orgTranslateY = ((Shape) me.getSource()).getTranslateY();
 
                     Point2D oldPoint = new Point2D(orgTranslateX, orgTranslateY);
-                    MoveAction ma = new MoveAction((Shape) me.getSource());
-                    ma.setOldPoint(oldPoint);
+                    MoveAction moveAction = new MoveAction((Shape) me.getSource());
+                    moveAction.setOldPoint(oldPoint);
 
-                    buffer[currentAction] = ma;
-                    currentAction++;
-                    maxAction = currentAction;
+                    buffer.addAction(moveAction);
                 }
             } else {
 
@@ -619,9 +551,7 @@ public class DrawerFX extends Application {
 
                     path = new Path();
 
-                    buffer[currentAction] = new DrawAction(canvas, path);
-                    currentAction++;
-                    maxAction = currentAction;
+                    buffer.addAction(new DrawAction(canvas, path));
 
                     path.setStrokeWidth(sampleLine.getStrokeWidth());
                     path.setStroke(sampleLine.getStroke());
@@ -653,9 +583,7 @@ public class DrawerFX extends Application {
                     }
                     canvas.getChildren().add(rect);
 
-                    buffer[currentAction] = new DrawAction(canvas, rect);
-                    currentAction++;
-                    maxAction = currentAction;
+                    buffer.addAction(new DrawAction(canvas, rect));
 
                     rect.setOnMousePressed(pressHandler);
                     rect.setOnMouseDragged(drugHandler);
@@ -668,22 +596,20 @@ public class DrawerFX extends Application {
                     rsX = me.getX();
                     rsY = me.getY();
                     if (fillBox.isSelected()) {
-                        circ = new Circle(0, sampleLine.getStroke());
+                        circle = new Circle(0, sampleLine.getStroke());
                     } else {
-                        circ = new Circle(0, Color.TRANSPARENT);
-                        circ.setStroke(sampleLine.getStroke());
-                        circ.setStrokeWidth(sampleLine.getStrokeWidth());
+                        circle = new Circle(0, Color.TRANSPARENT);
+                        circle.setStroke(sampleLine.getStroke());
+                        circle.setStrokeWidth(sampleLine.getStrokeWidth());
                     }
-                    canvas.getChildren().add(circ);
-                    buffer[currentAction] = new DrawAction(canvas, circ);
-                    currentAction++;
-                    maxAction = currentAction;
+                    canvas.getChildren().add(circle);
+                    buffer.addAction(new DrawAction(canvas, circle));
 
-                    circ.setOnMousePressed(pressHandler);
-                    circ.setOnMouseDragged(drugHandler);
-                    circ.setOnMouseClicked(clickHandler);
-                    circ.setOnMouseEntered(enterHandler);
-                    circ.setOnMouseExited(exitHandler);
+                    circle.setOnMousePressed(pressHandler);
+                    circle.setOnMouseDragged(drugHandler);
+                    circle.setOnMouseClicked(clickHandler);
+                    circle.setOnMouseEntered(enterHandler);
+                    circle.setOnMouseExited(exitHandler);
 
                 } else if (modeChoice.getSelectedToggle() == toggleButtonLine) {
 
@@ -695,9 +621,8 @@ public class DrawerFX extends Application {
                     line.setStrokeWidth(sampleLine.getStrokeWidth());
                     line.setStroke(sampleLine.getStroke());
                     canvas.getChildren().add(line);
-                    buffer[currentAction] = new DrawAction(canvas, line);
-                    currentAction++;
-                    maxAction = currentAction;
+
+                    buffer.addAction(new DrawAction(canvas, line));
 
                     line.setOnMousePressed(pressHandler);
                     line.setOnMouseDragged(drugHandler);
@@ -720,9 +645,7 @@ public class DrawerFX extends Application {
                         ellipse.setStrokeWidth(sampleLine.getStrokeWidth());
                     }
                     canvas.getChildren().add(ellipse);
-                    buffer[currentAction] = new DrawAction(canvas, ellipse);
-                    currentAction++;
-                    maxAction = currentAction;
+                    buffer.addAction(new DrawAction(canvas, ellipse));
 
                     ellipse.setOnMousePressed(pressHandler);
                     ellipse.setOnMouseDragged(drugHandler);
@@ -745,9 +668,8 @@ public class DrawerFX extends Application {
                         square.setStrokeWidth(sampleLine.getStrokeWidth());
                     }
                     canvas.getChildren().add(square);
-                    buffer[currentAction] = new DrawAction(canvas, square);
-                    currentAction++;
-                    maxAction = currentAction;
+
+                    buffer.addAction(new DrawAction(canvas, square));
 
                     square.setOnMousePressed(pressHandler);
                     square.setOnMouseDragged(drugHandler);
@@ -771,7 +693,7 @@ public class DrawerFX extends Application {
             } else if (modeChoice.getSelectedToggle() == toggleRectangular) {
                 rect = null;
             } else if (modeChoice.getSelectedToggle() == toggleButtonCircle) {
-                circ = null;
+                circle = null;
             } else if (modeChoice.getSelectedToggle() == toggleButtonLine) {
                 line = null;
             } else if (modeChoice.getSelectedToggle() == toggleButtonEllipse) {
@@ -801,21 +723,15 @@ public class DrawerFX extends Application {
      * Re-do undone action.
      */
     private void redo() {
-        if (currentAction < maxAction) {
-            Action action = buffer[currentAction];
-            action.redo();
-            currentAction++;
-        }
+        Action action = buffer.getNextAction();
+        action.redo();
     }
 
     /**
      * Undo action.
      */
     private void undo() {
-        if (currentAction > 0) {
-            currentAction--;
-            Action action = buffer[currentAction];
-            action.undo();
-        }
+        Action action = buffer.getPreviousAction();
+        action.undo();
     }
 }
