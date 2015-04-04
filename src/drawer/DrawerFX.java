@@ -44,23 +44,8 @@ public class DrawerFX extends Application {
     private Pane canvas;
 
     /**
-     * Temporary object for holding Path object while drawing.
+     * Checkbox defining a need of filling the shapes with paint.
      */
-    private Path path;
-
-    /**
-     * Temporary object for holding Rectangle object while drawing.
-     */
-    private Rectangle rect;
-
-    private Circle circle;
-
-    private Line line;
-
-    private Ellipse ellipse;
-
-    private Rectangle square;
-
     private CheckBox fillBox;
 
     /**
@@ -161,7 +146,7 @@ public class DrawerFX extends Application {
     private EditHistoryBuffer buffer = new EditHistoryBuffer();
 
     /**
-     * Currently drawn shape
+     * Temporary object for holding Shape object while drawing.
      */
     private Shape shape;
 
@@ -352,13 +337,15 @@ public class DrawerFX extends Application {
                 }
             } else {
                 drawingShape = true;
-                if (modeChoice.getSelectedToggle() == toggleButtonStroke && path != null) {
+                if (modeChoice.getSelectedToggle() == toggleButtonStroke && shape != null) {
                     LineTo lineTo = new LineTo(me.getX(), me.getY());
-                    path.getElements().add(lineTo);
+                    ((Path) shape).getElements().add(lineTo);
                 } else if (modeChoice.getSelectedToggle() == toggleRectangular
-                        && rect != null) {
+                        && shape != null) {
                     double meX = me.getX();
                     double meY = me.getY();
+
+                    Rectangle rect = ((Rectangle) shape);
 
                     if (rsX < meX) {
                         if (rsY < meY) {
@@ -388,10 +375,12 @@ public class DrawerFX extends Application {
                         }
                     }
 
-                } else if (modeChoice.getSelectedToggle() == toggleButtonCircle && circle != null) {
+                } else if (modeChoice.getSelectedToggle() == toggleButtonCircle && shape != null) {
 
                     double meX = me.getX();
                     double meY = me.getY();
+
+                    Circle circle = ((Circle) shape);
 
                     if (rsX < meX) {
                         circle.setCenterX(rsX + (meX - rsX) / 2);
@@ -413,18 +402,21 @@ public class DrawerFX extends Application {
                         }
                     }
 
-                } else if (modeChoice.getSelectedToggle() == toggleButtonLine && line != null) {
+                } else if (modeChoice.getSelectedToggle() == toggleButtonLine && shape != null) {
                     double meX = me.getX();
                     double meY = me.getY();
 
+                    Line line = ((Line) shape);
                     line.setStartX(rsX);
                     line.setStartY(rsY);
                     line.setEndX(meX);
                     line.setEndY(meY);
-                } else if (modeChoice.getSelectedToggle() == toggleButtonEllipse && ellipse != null) {
+                } else if (modeChoice.getSelectedToggle() == toggleButtonEllipse && shape != null) {
 
                     double meX = me.getX();
                     double meY = me.getY();
+
+                    Ellipse ellipse = ((Ellipse) shape);
 
                     if (rsX < meX) {
                         ellipse.setCenterX(rsX + (meX - rsX) / 2);
@@ -447,9 +439,11 @@ public class DrawerFX extends Application {
                             ellipse.setRadiusY(rsY - ellipse.getCenterY());
                         }
                     }
-                } else if (modeChoice.getSelectedToggle() == toggleButtonSquare && square != null) {
+                } else if (modeChoice.getSelectedToggle() == toggleButtonSquare && shape != null) {
                     double meX = me.getX();
                     double meY = me.getY();
+
+                    Rectangle square = ((Rectangle) shape);
 
                     if (rsX < meX) {
                         if (rsY < meY) {
@@ -513,7 +507,7 @@ public class DrawerFX extends Application {
 
                 if (modeChoice.getSelectedToggle() == toggleButtonStroke) {
 
-                    path = new Path();
+                    Path path = new Path();
 
                     buffer.addAction(new DrawAction(canvas, path));
 
@@ -526,13 +520,15 @@ public class DrawerFX extends Application {
                     path.getElements().add(
                             new MoveTo(me.getX(), me.getY()));
 
+                    shape = path;
+
                 } else if (modeChoice.getSelectedToggle() == toggleRectangular) {
 
                     // Rectangle-Start
                     rsX = me.getX();
                     rsY = me.getY();
 
-                    rect = new Rectangle(rsX, rsY, 0, 0);
+                    Rectangle rect = new Rectangle(rsX, rsY, 0, 0);
 
                     if (fillBox.isSelected()) {
                         rect.setFill(sampleLine.getStroke());
@@ -546,11 +542,15 @@ public class DrawerFX extends Application {
                     buffer.addAction(new DrawAction(canvas, rect));
 
                     setMouseEventHandlers(rect);
+                    shape = rect;
                 } else if (modeChoice.getSelectedToggle() == toggleButtonCircle) {
 
                     //Circle drawing
                     rsX = me.getX();
                     rsY = me.getY();
+
+                    Circle circle;
+
                     if (fillBox.isSelected()) {
                         circle = new Circle(0, sampleLine.getStroke());
                     } else {
@@ -562,6 +562,7 @@ public class DrawerFX extends Application {
                     buffer.addAction(new DrawAction(canvas, circle));
 
                     setMouseEventHandlers(circle);
+                    shape = circle;
 
                 } else if (modeChoice.getSelectedToggle() == toggleButtonLine) {
 
@@ -569,7 +570,7 @@ public class DrawerFX extends Application {
                     rsX = me.getX();
                     rsY = me.getY();
 
-                    line = new Line(rsX, rsY, rsX, rsY);
+                    Line line = new Line(rsX, rsY, rsX, rsY);
                     line.setStrokeWidth(sampleLine.getStrokeWidth());
                     line.setStroke(sampleLine.getStroke());
                     canvas.getChildren().add(line);
@@ -577,13 +578,14 @@ public class DrawerFX extends Application {
                     buffer.addAction(new DrawAction(canvas, line));
 
                     setMouseEventHandlers(line);
+                    shape = line;
 
                 } else if (modeChoice.getSelectedToggle() == toggleButtonEllipse) {
 
                     //Ellipse drawing
                     rsX = me.getX();
                     rsY = me.getY();
-                    ellipse = new Ellipse(0, 0);
+                    Ellipse ellipse = new Ellipse(0, 0);
 
                     if (fillBox.isSelected()) {
                         ellipse.setFill(sampleLine.getStroke());
@@ -596,13 +598,14 @@ public class DrawerFX extends Application {
                     buffer.addAction(new DrawAction(canvas, ellipse));
 
                     setMouseEventHandlers(ellipse);
+                    shape = ellipse;
 
                 } else if (modeChoice.getSelectedToggle() == toggleButtonSquare) {
 
                     //Ellipse drawing
                     rsX = me.getX();
                     rsY = me.getY();
-                    square = new Rectangle(0, 0);
+                    Rectangle square = new Rectangle(0, 0);
 
                     if (fillBox.isSelected()) {
                         square.setFill(sampleLine.getStroke());
@@ -616,7 +619,7 @@ public class DrawerFX extends Application {
                     buffer.addAction(new DrawAction(canvas, square));
 
                     setMouseEventHandlers(square);
-
+                    shape = square;
                 }
             }
         }
@@ -636,17 +639,7 @@ public class DrawerFX extends Application {
     EventHandler<MouseEvent> releaseHandler = new EventHandler<MouseEvent>() {
         @Override
         public void handle(MouseEvent event) {
-            if (modeChoice.getSelectedToggle() == toggleButtonStroke) {
-                path = null;
-            } else if (modeChoice.getSelectedToggle() == toggleRectangular) {
-                rect = null;
-            } else if (modeChoice.getSelectedToggle() == toggleButtonCircle) {
-                circle = null;
-            } else if (modeChoice.getSelectedToggle() == toggleButtonLine) {
-                line = null;
-            } else if (modeChoice.getSelectedToggle() == toggleButtonEllipse) {
-                ellipse = null;
-            }
+            shape = null;
         }
     };
 
