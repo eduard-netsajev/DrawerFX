@@ -1,10 +1,10 @@
 package drawer.mode;
 
 import drawer.DrawerApplication;
-import drawer.ToggledShape;
+import drawer.ShapeMode;
 import drawer.action.DrawAction;
 import drawer.buffer.ActionBuffer;
-import javafx.beans.property.BooleanProperty;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -21,19 +21,24 @@ public class DrawerMode implements UsageMode {
     private Line sampleLine;
 
     private Shape shape;
-    private double rsX, rsY;
-    private BooleanProperty fillShape;
+    private double shapeStartX, shapeStartY;
+    private ObservableBooleanValue fillShape;
 
     public DrawerMode(DrawerApplication application) {
-        this.canvas = application.getCanvas();
-        this.buffer = application.getBuffer();
-        this.sampleLine = application.getSampleLine();
-        this.fillShape = application.getFillShapeProperty();
         this.application = application;
+        updateFields();
+    }
+
+    private void updateFields() {
+        canvas = application.getCanvas();
+        buffer = application.getBuffer();
+        sampleLine = application.getSampleLine();
+        fillShape = application.getFillShapeProperty();
     }
 
     @Override
     public void handleClick(MouseEvent me) {
+        updateFields();
         if (me.getButton() != MouseButton.PRIMARY) {
             return;
         }
@@ -53,145 +58,145 @@ public class DrawerMode implements UsageMode {
 
     @Override
     public void handleDrag(MouseEvent me) {
-
-        ToggledShape mode = application.getShapeMode();
+        updateFields();
+        ShapeMode mode = application.getShapeMode();
 
         drawingShape = true;
-        if (mode == ToggledShape.STROKE && shape != null) {
+        if (mode == ShapeMode.STROKE && shape != null) {
             LineTo lineTo = new LineTo(me.getX(), me.getY());
             ((Path) shape).getElements().add(lineTo);
-        } else if (mode == ToggledShape.RECTANGULAR
+        } else if (mode == ShapeMode.RECTANGULAR
                 && shape != null) {
             double meX = me.getX();
             double meY = me.getY();
 
             Rectangle rect = ((Rectangle) shape);
 
-            if (rsX < meX) {
-                if (rsY < meY) {
+            if (shapeStartX < meX) {
+                if (shapeStartY < meY) {
 
-                    rect.setX(rsX);
-                    rect.setY(rsY);
-                    rect.setWidth(meX - rsX);
-                    rect.setHeight(meY - rsY);
+                    rect.setX(shapeStartX);
+                    rect.setY(shapeStartY);
+                    rect.setWidth(meX - shapeStartX);
+                    rect.setHeight(meY - shapeStartY);
                 } else {
-                    rect.setX(rsX);
+                    rect.setX(shapeStartX);
                     rect.setY(meY);
-                    rect.setWidth(meX - rsX);
-                    rect.setHeight(rsY - meY);
+                    rect.setWidth(meX - shapeStartX);
+                    rect.setHeight(shapeStartY - meY);
                 }
             } else {
-                if (rsY < meY) {
+                if (shapeStartY < meY) {
 
                     rect.setX(meX);
-                    rect.setY(rsY);
-                    rect.setWidth(rsX - meX);
-                    rect.setHeight(meY - rsY);
+                    rect.setY(shapeStartY);
+                    rect.setWidth(shapeStartX - meX);
+                    rect.setHeight(meY - shapeStartY);
                 } else {
                     rect.setX(meX);
                     rect.setY(meY);
-                    rect.setWidth(rsX - meX);
-                    rect.setHeight(rsY - meY);
+                    rect.setWidth(shapeStartX - meX);
+                    rect.setHeight(shapeStartY - meY);
                 }
             }
 
-        } else if (mode == ToggledShape.CIRCLE && shape != null) {
+        } else if (mode == ShapeMode.CIRCLE && shape != null) {
 
             double meX = me.getX();
             double meY = me.getY();
 
             Circle circle = ((Circle) shape);
 
-            if (rsX < meX) {
-                circle.setCenterX(rsX + (meX - rsX) / 2);
-                if (rsY < meY) {
-                    circle.setCenterY(rsY + (meY - rsY) / 2);
+            if (shapeStartX < meX) {
+                circle.setCenterX(shapeStartX + (meX - shapeStartX) / 2);
+                if (shapeStartY < meY) {
+                    circle.setCenterY(shapeStartY + (meY - shapeStartY) / 2);
                     circle.setRadius(Math.max(meX - circle.getCenterX(), meY - circle.getCenterY()));
                 } else {
-                    circle.setCenterY(meY + (rsY - meY) / 2);
-                    circle.setRadius(Math.max(meX - circle.getCenterX(), rsY - circle.getCenterY()));
+                    circle.setCenterY(meY + (shapeStartY - meY) / 2);
+                    circle.setRadius(Math.max(meX - circle.getCenterX(), shapeStartY - circle.getCenterY()));
                 }
             } else {
-                circle.setCenterX(meX + (rsX - meX) / 2);
-                if (rsY < meY) {
-                    circle.setCenterY(rsY + (meY - rsY) / 2);
-                    circle.setRadius(Math.max(rsX - circle.getCenterX(), meY - circle.getCenterY()));
+                circle.setCenterX(meX + (shapeStartX - meX) / 2);
+                if (shapeStartY < meY) {
+                    circle.setCenterY(shapeStartY + (meY - shapeStartY) / 2);
+                    circle.setRadius(Math.max(shapeStartX - circle.getCenterX(), meY - circle.getCenterY()));
                 } else {
-                    circle.setCenterY(meY + (rsY - meY) / 2);
-                    circle.setRadius(Math.max(rsX - circle.getCenterX(), rsY - circle.getCenterY()));
+                    circle.setCenterY(meY + (shapeStartY - meY) / 2);
+                    circle.setRadius(Math.max(shapeStartX - circle.getCenterX(), shapeStartY - circle.getCenterY()));
                 }
             }
 
-        } else if (mode == ToggledShape.LINE && shape != null) {
+        } else if (mode == ShapeMode.LINE && shape != null) {
             double meX = me.getX();
             double meY = me.getY();
 
             Line line = ((Line) shape);
-            line.setStartX(rsX);
-            line.setStartY(rsY);
+            line.setStartX(shapeStartX);
+            line.setStartY(shapeStartY);
             line.setEndX(meX);
             line.setEndY(meY);
-        } else if (mode == ToggledShape.ELLIPSE && shape != null) {
+        } else if (mode == ShapeMode.ELLIPSE && shape != null) {
 
             double meX = me.getX();
             double meY = me.getY();
 
             Ellipse ellipse = ((Ellipse) shape);
 
-            if (rsX < meX) {
-                ellipse.setCenterX(rsX + (meX - rsX) / 2);
+            if (shapeStartX < meX) {
+                ellipse.setCenterX(shapeStartX + (meX - shapeStartX) / 2);
                 ellipse.setRadiusX(meX - ellipse.getCenterX());
-                if (rsY < meY) {
-                    ellipse.setCenterY(rsY + (meY - rsY) / 2);
+                if (shapeStartY < meY) {
+                    ellipse.setCenterY(shapeStartY + (meY - shapeStartY) / 2);
                     ellipse.setRadiusY(meY - ellipse.getCenterY());
                 } else {
-                    ellipse.setCenterY(meY + (rsY - meY) / 2);
-                    ellipse.setRadiusY(rsY - ellipse.getCenterY());
+                    ellipse.setCenterY(meY + (shapeStartY - meY) / 2);
+                    ellipse.setRadiusY(shapeStartY - ellipse.getCenterY());
                 }
             } else {
-                ellipse.setCenterX(meX + (rsX - meX) / 2);
-                ellipse.setRadiusX(rsX - ellipse.getCenterX());
-                if (rsY < meY) {
-                    ellipse.setCenterY(rsY + (meY - rsY) / 2);
+                ellipse.setCenterX(meX + (shapeStartX - meX) / 2);
+                ellipse.setRadiusX(shapeStartX - ellipse.getCenterX());
+                if (shapeStartY < meY) {
+                    ellipse.setCenterY(shapeStartY + (meY - shapeStartY) / 2);
                     ellipse.setRadiusY(meY - ellipse.getCenterY());
                 } else {
-                    ellipse.setCenterY(meY + (rsY - meY) / 2);
-                    ellipse.setRadiusY(rsY - ellipse.getCenterY());
+                    ellipse.setCenterY(meY + (shapeStartY - meY) / 2);
+                    ellipse.setRadiusY(shapeStartY - ellipse.getCenterY());
                 }
             }
-        } else if (mode == ToggledShape.SQUARE && shape != null) {
+        } else if (mode == ShapeMode.SQUARE && shape != null) {
             double meX = me.getX();
             double meY = me.getY();
 
             Rectangle square = ((Rectangle) shape);
 
-            if (rsX < meX) {
-                if (rsY < meY) {
+            if (shapeStartX < meX) {
+                if (shapeStartY < meY) {
                     // lower right
-                    square.setX(rsX);
-                    square.setY(rsY);
-                    square.setWidth(meX - rsX);
-                    square.setHeight(meX - rsX);
+                    square.setX(shapeStartX);
+                    square.setY(shapeStartY);
+                    square.setWidth(meX - shapeStartX);
+                    square.setHeight(meX - shapeStartX);
                 } else {
                     // upper right
-                    square.setX(rsX);
+                    square.setX(shapeStartX);
                     square.setY(meY);
-                    square.setWidth(rsY - meY);
-                    square.setHeight(rsY - meY);
+                    square.setWidth(shapeStartY - meY);
+                    square.setHeight(shapeStartY - meY);
                 }
             } else {
-                if (rsY < meY) {
+                if (shapeStartY < meY) {
                     // lower left
                     square.setX(meX);
-                    square.setY(rsY);
-                    square.setWidth(rsX - meX);
-                    square.setHeight(rsX - meX);
+                    square.setY(shapeStartY);
+                    square.setWidth(shapeStartX - meX);
+                    square.setHeight(shapeStartX - meX);
                 } else {
                     // upper right
                     square.setX(meX);
-                    square.setY(rsY - rsX + meX);
-                    square.setWidth(rsX - meX);
-                    square.setHeight(rsX - meX);
+                    square.setY(shapeStartY - shapeStartX + meX);
+                    square.setWidth(shapeStartX - meX);
+                    square.setHeight(shapeStartX - meX);
                 }
             }
         }
@@ -199,9 +204,12 @@ public class DrawerMode implements UsageMode {
 
     @Override
     public void handlePress(MouseEvent me) {
-        ToggledShape mode = application.getShapeMode();
+        updateFields();
+        ShapeMode mode = application.getShapeMode();
+        shapeStartX = me.getX();
+        shapeStartY = me.getY();
 
-        if (mode == ToggledShape.STROKE) {
+        if (mode == ShapeMode.STROKE) {
 
             Path path = new Path();
 
@@ -211,20 +219,13 @@ public class DrawerMode implements UsageMode {
             path.setStroke(sampleLine.getStroke());
 
             application.registerShapeHandlers(path);
-
             canvas.getChildren().add(path);
-            path.getElements().add(
-                    new MoveTo(me.getX(), me.getY()));
-
+            path.getElements().add(new MoveTo(shapeStartX, shapeStartY));
             shape = path;
 
-        } else if (mode == ToggledShape.RECTANGULAR) {
+        } else if (mode == ShapeMode.RECTANGULAR) {
 
-            // Rectangle-Start
-            rsX = me.getX();
-            rsY = me.getY();
-
-            Rectangle rect = new Rectangle(rsX, rsY, 0, 0);
+            Rectangle rect = new Rectangle(shapeStartX, shapeStartY, 0, 0);
 
             if (fillShape.get()) {
                 rect.setFill(sampleLine.getStroke());
@@ -234,16 +235,10 @@ public class DrawerMode implements UsageMode {
                 rect.setStrokeWidth(sampleLine.getStrokeWidth());
             }
             canvas.getChildren().add(rect);
-
             buffer.add(new DrawAction(canvas, rect));
-
             application.registerShapeHandlers(rect);
             shape = rect;
-        } else if (mode == ToggledShape.CIRCLE) {
-
-            //Circle drawing
-            rsX = me.getX();
-            rsY = me.getY();
+        } else if (mode == ShapeMode.CIRCLE) {
 
             Circle circle;
 
@@ -256,31 +251,21 @@ public class DrawerMode implements UsageMode {
             }
             canvas.getChildren().add(circle);
             buffer.add(new DrawAction(canvas, circle));
-
             application.registerShapeHandlers(circle);
             shape = circle;
 
-        } else if (mode == ToggledShape.LINE) {
+        } else if (mode == ShapeMode.LINE) {
 
-            //Line drawing
-            rsX = me.getX();
-            rsY = me.getY();
-
-            Line line = new Line(rsX, rsY, rsX, rsY);
+            Line line = new Line(shapeStartX, shapeStartY, shapeStartX, shapeStartY);
             line.setStrokeWidth(sampleLine.getStrokeWidth());
             line.setStroke(sampleLine.getStroke());
             canvas.getChildren().add(line);
-
             buffer.add(new DrawAction(canvas, line));
-
             application.registerShapeHandlers(line);
             shape = line;
 
-        } else if (mode == ToggledShape.ELLIPSE) {
+        } else if (mode == ShapeMode.ELLIPSE) {
 
-            //Ellipse drawing
-            rsX = me.getX();
-            rsY = me.getY();
             Ellipse ellipse = new Ellipse(0, 0);
 
             if (fillShape.get()) {
@@ -292,15 +277,11 @@ public class DrawerMode implements UsageMode {
             }
             canvas.getChildren().add(ellipse);
             buffer.add(new DrawAction(canvas, ellipse));
-
             application.registerShapeHandlers(ellipse);
             shape = ellipse;
 
-        } else if (mode == ToggledShape.SQUARE) {
+        } else if (mode == ShapeMode.SQUARE) {
 
-            //Ellipse drawing
-            rsX = me.getX();
-            rsY = me.getY();
             Rectangle square = new Rectangle(0, 0);
 
             if (fillShape.get()) {
@@ -311,9 +292,7 @@ public class DrawerMode implements UsageMode {
                 square.setStrokeWidth(sampleLine.getStrokeWidth());
             }
             canvas.getChildren().add(square);
-
             buffer.add(new DrawAction(canvas, square));
-
             application.registerShapeHandlers(square);
             shape = square;
         }

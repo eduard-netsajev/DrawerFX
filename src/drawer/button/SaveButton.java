@@ -1,4 +1,4 @@
-package drawer;
+package drawer.button;
 
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.SnapshotParameters;

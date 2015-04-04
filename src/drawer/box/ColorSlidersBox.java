@@ -1,4 +1,4 @@
-package drawer;
+package drawer.box;
 
 import drawer.SlidersColorBinding;
 import javafx.geometry.Pos;

@@ -1,4 +1,4 @@
-package drawer;
+package drawer.button;
 
 import javafx.scene.control.Button;
 import javafx.scene.layout.Pane;
