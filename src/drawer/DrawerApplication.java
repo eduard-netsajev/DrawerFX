@@ -1,5 +1,7 @@
 package drawer;
 
+import drawer.buffer.ActionBuffer;
+import drawer.mode.UsageMode;
 import javafx.beans.property.BooleanProperty;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Line;
@@ -13,7 +15,7 @@ public interface DrawerApplication {
 
     UsageMode getUsageMode();
 
-    EditHistoryBuffer getBuffer();
+    ActionBuffer getBuffer();
 
     void registerShapeHandlers(Shape shape);
 

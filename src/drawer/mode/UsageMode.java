@@ -1,4 +1,4 @@
-package drawer;
+package drawer.mode;
 
 import javafx.scene.input.MouseEvent;
 

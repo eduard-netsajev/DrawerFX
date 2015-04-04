@@ -1,8 +1,11 @@
-package drawer;
+package drawer.mode;
 
-import drawer.actions.Action;
-import drawer.actions.EraseAction;
-import drawer.actions.MoveAction;
+import drawer.DrawerApplication;
+import drawer.Point2D;
+import drawer.action.Action;
+import drawer.action.EraseAction;
+import drawer.action.MoveAction;
+import drawer.buffer.ActionBuffer;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -17,8 +20,8 @@ public class DirectorMode implements UsageMode {
      */
     private final DropShadow shadow = new DropShadow(15, Color.BLACK);
 
-    Pane canvas;
-    EditHistoryBuffer buffer;
+    private Pane canvas;
+    private ActionBuffer buffer;
 
     public DirectorMode(DrawerApplication application) {
         this.canvas = application.getCanvas();
@@ -30,13 +33,13 @@ public class DirectorMode implements UsageMode {
         if (me.getButton() == MouseButton.SECONDARY && me.getSource() instanceof Shape) {
             Shape shape = (Shape) me.getSource();
             canvas.getChildren().remove(shape);
-            buffer.addAction(new EraseAction(canvas, shape));
+            buffer.add(new EraseAction(canvas, shape));
         }
     }
 
     @Override
     public void handleDrag(MouseEvent me) {
-        Action previousAction = buffer.peekPreviousAction();
+        Action previousAction = buffer.peekPrevious();
         if (me.getSource() instanceof Shape && previousAction instanceof MoveAction) {
             MoveAction moveAction = (MoveAction) previousAction;
 
@@ -66,7 +69,7 @@ public class DirectorMode implements UsageMode {
             Point2D oldLayoutPoint = new Point2D(shape.getLayoutX(), shape.getLayoutY());
             moveAction.setOldLayoutPoint(oldLayoutPoint);
 
-            buffer.addAction(moveAction);
+            buffer.add(moveAction);
         }
     }
 

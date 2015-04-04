@@ -1,6 +1,9 @@
-package drawer;
+package drawer.mode;
 
-import drawer.actions.DrawAction;
+import drawer.DrawerApplication;
+import drawer.ToggledShape;
+import drawer.action.DrawAction;
+import drawer.buffer.ActionBuffer;
 import javafx.beans.property.BooleanProperty;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -12,14 +15,14 @@ public class DrawerMode implements UsageMode {
 
     DrawerApplication application;
 
-    Pane canvas;
-    EditHistoryBuffer buffer;
-    boolean drawingShape;
-    Line sampleLine;
+    private Pane canvas;
+    private ActionBuffer buffer;
+    private boolean drawingShape;
+    private Line sampleLine;
 
-    Shape shape;
-    double rsX, rsY;
-    BooleanProperty fillShape;
+    private Shape shape;
+    private double rsX, rsY;
+    private BooleanProperty fillShape;
 
     public DrawerMode(DrawerApplication application) {
         this.canvas = application.getCanvas();
@@ -42,7 +45,7 @@ public class DrawerMode implements UsageMode {
         double a = sampleLine.getStrokeWidth() / 2.0;
         Rectangle point = new Rectangle(me.getX() - a,
                 me.getY() - a, a * 2.0, a * 2.0);
-        buffer.addAction(new DrawAction(canvas, point));
+        buffer.add(new DrawAction(canvas, point));
         point.setFill(sampleLine.getStroke());
         application.registerShapeHandlers(point);
         canvas.getChildren().add(point);
@@ -202,7 +205,7 @@ public class DrawerMode implements UsageMode {
 
             Path path = new Path();
 
-            buffer.addAction(new DrawAction(canvas, path));
+            buffer.add(new DrawAction(canvas, path));
 
             path.setStrokeWidth(sampleLine.getStrokeWidth());
             path.setStroke(sampleLine.getStroke());
@@ -232,7 +235,7 @@ public class DrawerMode implements UsageMode {
             }
             canvas.getChildren().add(rect);
 
-            buffer.addAction(new DrawAction(canvas, rect));
+            buffer.add(new DrawAction(canvas, rect));
 
             application.registerShapeHandlers(rect);
             shape = rect;
@@ -252,7 +255,7 @@ public class DrawerMode implements UsageMode {
                 circle.setStrokeWidth(sampleLine.getStrokeWidth());
             }
             canvas.getChildren().add(circle);
-            buffer.addAction(new DrawAction(canvas, circle));
+            buffer.add(new DrawAction(canvas, circle));
 
             application.registerShapeHandlers(circle);
             shape = circle;
@@ -268,7 +271,7 @@ public class DrawerMode implements UsageMode {
             line.setStroke(sampleLine.getStroke());
             canvas.getChildren().add(line);
 
-            buffer.addAction(new DrawAction(canvas, line));
+            buffer.add(new DrawAction(canvas, line));
 
             application.registerShapeHandlers(line);
             shape = line;
@@ -288,7 +291,7 @@ public class DrawerMode implements UsageMode {
                 ellipse.setStrokeWidth(sampleLine.getStrokeWidth());
             }
             canvas.getChildren().add(ellipse);
-            buffer.addAction(new DrawAction(canvas, ellipse));
+            buffer.add(new DrawAction(canvas, ellipse));
 
             application.registerShapeHandlers(ellipse);
             shape = ellipse;
@@ -309,16 +312,11 @@ public class DrawerMode implements UsageMode {
             }
             canvas.getChildren().add(square);
 
-            buffer.addAction(new DrawAction(canvas, square));
+            buffer.add(new DrawAction(canvas, square));
 
             application.registerShapeHandlers(square);
             shape = square;
         }
-    }
-
-    @Override
-    public void handleEnter(MouseEvent me) {
-
     }
 
     @Override
@@ -327,7 +325,12 @@ public class DrawerMode implements UsageMode {
     }
 
     @Override
-    public void handleExit(MouseEvent me) {
+    public void handleEnter(MouseEvent me) {
+        // do nothing
+    }
 
+    @Override
+    public void handleExit(MouseEvent me) {
+        // do nothing
     }
 }

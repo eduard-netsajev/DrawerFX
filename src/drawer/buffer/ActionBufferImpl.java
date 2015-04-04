@@ -1,8 +1,8 @@
-package drawer;
+package drawer.buffer;
 
-import drawer.actions.Action;
-import drawer.actions.ApplicationStartAction;
-import drawer.actions.BlankAction;
+import drawer.action.Action;
+import drawer.action.ApplicationStartAction;
+import drawer.action.BlankAction;
 
 import java.util.LinkedList;
 import java.util.ListIterator;
@@ -11,20 +11,22 @@ import java.util.ListIterator;
  * All actions that were undone are deleted
  * if you add any new action.
  */
-public class EditHistoryBuffer {
+public class ActionBufferImpl implements ActionBuffer {
 
     private ListIterator<Action> iterator;
 
-    public EditHistoryBuffer() {
+    public ActionBufferImpl() {
         clear();
     }
 
+    @Override
     public void clear() {
         LinkedList<Action> buffer = new LinkedList<>();
         iterator = buffer.listIterator();
     }
 
-    public void addAction(Action action) {
+    @Override
+    public void add(Action action) {
         cleanForwardHistory();
         iterator.add(action);
     }
@@ -36,22 +38,24 @@ public class EditHistoryBuffer {
         }
     }
 
-    public Action getPreviousAction() {
+    @Override
+    public Action getPrevious() {
         if (iterator.hasPrevious())
             return iterator.previous();
         else
             return new ApplicationStartAction();
     }
 
-
-    public Action getNextAction() {
+    @Override
+    public Action getNext() {
         if (iterator.hasNext())
             return iterator.next();
         else
             return new BlankAction();
     }
 
-    public Action peekPreviousAction() {
+    @Override
+    public Action peekPrevious() {
         Action action;
         if (iterator.hasPrevious()) {
             action = iterator.previous();
@@ -63,7 +67,8 @@ public class EditHistoryBuffer {
         return action;
     }
 
-    public Action peekNextAction() {
+    @Override
+    public Action peekNext() {
         Action action;
         if (iterator.hasNext()) {
             action = iterator.next();

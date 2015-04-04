@@ -1,4 +1,4 @@
-package drawer.actions;
+package drawer.action;
 
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Shape;

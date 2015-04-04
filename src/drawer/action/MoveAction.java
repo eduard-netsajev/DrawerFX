@@ -1,4 +1,4 @@
-package drawer.actions;
+package drawer.action;
 
 import drawer.Point2D;
 import javafx.scene.shape.Shape;

@@ -1,6 +1,11 @@
 package drawer;
 
-import drawer.actions.Action;
+import drawer.action.Action;
+import drawer.buffer.ActionBuffer;
+import drawer.buffer.ActionBufferImpl;
+import drawer.mode.DirectorMode;
+import drawer.mode.DrawerMode;
+import drawer.mode.UsageMode;
 import javafx.application.Application;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
@@ -47,11 +52,6 @@ public class DrawerFX extends Application implements DrawerApplication {
     private Line sampleLine;
 
     /**
-     * Rectangle drawing start point X and Y coordinates.
-     */
-    private double rsX, rsY;
-
-    /**
      * Starting width of a stroke.
      */
     private static final Double DEFAULTSTROKE = 3.0;
@@ -79,7 +79,7 @@ public class DrawerFX extends Application implements DrawerApplication {
     /**
      * Action objects collection - buffer.
      */
-    private EditHistoryBuffer buffer = new EditHistoryBuffer();
+    private ActionBuffer buffer = new ActionBufferImpl();
 
     private UsageMode currentMode;
 
@@ -280,12 +280,12 @@ public class DrawerFX extends Application implements DrawerApplication {
     }
 
     private void redo() {
-        Action action = buffer.getNextAction();
+        Action action = buffer.getNext();
         action.redo();
     }
 
     private void undo() {
-        Action action = buffer.getPreviousAction();
+        Action action = buffer.getPrevious();
         action.undo();
     }
 
@@ -301,12 +301,12 @@ public class DrawerFX extends Application implements DrawerApplication {
 
     @Override
     public UsageMode getUsageMode() {
-        return null;
+        return currentMode;
     }
 
 
     @Override
-    public EditHistoryBuffer getBuffer() {
+    public ActionBuffer getBuffer() {
         return buffer;
     }
 

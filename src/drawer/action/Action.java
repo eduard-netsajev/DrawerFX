@@ -1,4 +1,4 @@
-package drawer.actions;
+package drawer.action;
 
 /**
  * General Action interface for holding different actions together.

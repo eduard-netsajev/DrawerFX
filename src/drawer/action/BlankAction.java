@@ -1,4 +1,4 @@
-package drawer.actions;
+package drawer.action;
 
 public class BlankAction implements Action {
     @Override
