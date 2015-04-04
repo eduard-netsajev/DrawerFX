@@ -1,3 +1,5 @@
+package drawer.actions;
+
 public class BlankAction implements Action {
     @Override
     public void undo() {

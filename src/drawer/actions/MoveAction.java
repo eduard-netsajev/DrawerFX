@@ -1,3 +1,6 @@
+package drawer.actions;
+
+import drawer.Point2D;
 import javafx.scene.shape.Shape;
 
 /**

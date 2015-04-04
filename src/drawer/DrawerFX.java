@@ -1,26 +1,24 @@
+package drawer;
+
+import drawer.actions.Action;
+import drawer.actions.DrawAction;
+import drawer.actions.EraseAction;
+import drawer.actions.MoveAction;
 import javafx.application.Application;
-import javafx.beans.binding.ObjectBinding;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.*;
 import javafx.stage.Stage;
-
-import javax.imageio.ImageIO;
-import java.io.File;
 
 /**
  * Drawing application. Uses Java 8 and JavaFX features.
@@ -34,8 +32,6 @@ import java.io.File;
  * buttons or key ESCAPE and SPACE.
  */
 public class DrawerFX extends Application {
-
-    private static final int MILLISECS_IN_SEC = 1000;
 
     /**
      * Shadow effect for highlighting shapes.
@@ -160,9 +156,14 @@ public class DrawerFX extends Application {
     private static final int SCENE_HEIGHT = 1000;
 
     /**
-     * Action objects array - buffer.
+     * Action objects collection - buffer.
      */
     private EditHistoryBuffer buffer = new EditHistoryBuffer();
+
+    /**
+     * Currently drawn shape
+     */
+    private Shape shape;
 
     @Override
     public void start(Stage primaryStage) {
@@ -212,34 +213,15 @@ public class DrawerFX extends Application {
         Button redoButton = new Button("Redo");
         redoButton.setOnAction(event -> redo());
 
-        Button saveButton = new Button("Save");
-        saveButton.setOnAction(event -> {
-            SnapshotParameters snapshotParameters = new SnapshotParameters();
-            snapshotParameters.setFill(Color.TRANSPARENT);
-            WritableImage image = canvas.snapshot(snapshotParameters, null);
-            File file = new File(String.format("saved_%d.png", System.currentTimeMillis() / MILLISECS_IN_SEC));
-            try {
-                ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
-                System.out.println("Saved image at " + file.getAbsolutePath());
-            } catch (Exception e) {
-                System.out.println("exception");
-            }
-        });
+        Button saveButton = new SaveButton(canvas);
 
         bufferBox.getChildren().addAll(undoButton, redoButton, saveButton);
 
-        // Build the slider, label, and button and their VBox layout container 
-        Button btnClear = new Button();
-        btnClear.setText("Clear");
-        btnClear.setOnAction(event ->
-                canvas.getChildren().removeAll(canvas.getChildren()));
-
         Slider strokeSlider = new Slider(MINSTROKE, MAXSTROKE, DEFAULTSTROKE);
-        Label labelStroke = new Label("Stroke Width");
+
         fillBox = new CheckBox("Fill");
-        VBox utilBox = new VBox(10);
-        utilBox.setAlignment(Pos.TOP_CENTER);
-        utilBox.getChildren().addAll(btnClear, labelStroke, strokeSlider, fillBox);
+        Button clearButton = new ClearButton(canvas);
+        VBox utilBox = new UtilityBox(clearButton, strokeSlider, fillBox);
 
         // Build the RGB sliders, labels, and HBox containers
         Slider redSlider = new Slider(MINRGB, MAXRGB, DEFAULTRED);
@@ -268,20 +250,6 @@ public class DrawerFX extends Application {
         toolBox.getChildren().addAll(bufferBox, toggleBox, toggleBox2,
                 utilBox, colorBox);
 
-        // Build a Binding object to compute a Paint object from the sliders
-        ObjectBinding<Paint> colorBinding = new ObjectBinding<Paint>() {
-            {
-                super.bind(redSlider.valueProperty(),
-                        greenSlider.valueProperty(),
-                        blueSlider.valueProperty());
-            }
-            @Override
-            protected Paint computeValue() {
-                return Color.rgb(redSlider.valueProperty().intValue(),
-                        greenSlider.valueProperty().intValue(),
-                        blueSlider.valueProperty().intValue());
-            }
-        };
         // Build the sample line and its layout container
         sampleLine = new Line(0, 0, 150, 0);
         sampleLine.strokeWidthProperty().bind(strokeSlider.valueProperty());
@@ -289,7 +257,7 @@ public class DrawerFX extends Application {
         stackpane.setPrefHeight(MAXSTROKE);
         stackpane.getChildren().add(sampleLine);
         // Bind to the Paint Binding object
-        sampleLine.strokeProperty().bind(colorBinding);
+        sampleLine.strokeProperty().bind(new SlidersColorBinding(redSlider, greenSlider, blueSlider));
 
         canvas.setOnMouseClicked(clickHandler);
         canvas.setOnMousePressed(pressHandler);
@@ -350,11 +318,7 @@ public class DrawerFX extends Application {
                         me.getY() - a, a * 2.0, a * 2.0);
                 buffer.addAction(new DrawAction(canvas, point));
                 point.setFill(sampleLine.getStroke());
-                point.setOnMousePressed(pressHandler);
-                point.setOnMouseDragged(drugHandler);
-                point.setOnMouseEntered(enterHandler);
-                point.setOnMouseExited(exitHandler);
-                point.setOnMouseClicked(clickHandler);
+                setMouseEventHandlers(point);
                 canvas.getChildren().add(point);
             }
         }
@@ -556,11 +520,7 @@ public class DrawerFX extends Application {
                     path.setStrokeWidth(sampleLine.getStrokeWidth());
                     path.setStroke(sampleLine.getStroke());
 
-                    path.setOnMousePressed(pressHandler);
-                    path.setOnMouseDragged(drugHandler);
-                    path.setOnMouseEntered(enterHandler);
-                    path.setOnMouseExited(exitHandler);
-                    path.setOnMouseClicked(clickHandler);
+                    setMouseEventHandlers(path);
 
                     canvas.getChildren().add(path);
                     path.getElements().add(
@@ -585,11 +545,7 @@ public class DrawerFX extends Application {
 
                     buffer.addAction(new DrawAction(canvas, rect));
 
-                    rect.setOnMousePressed(pressHandler);
-                    rect.setOnMouseDragged(drugHandler);
-                    rect.setOnMouseClicked(clickHandler);
-                    rect.setOnMouseEntered(enterHandler);
-                    rect.setOnMouseExited(exitHandler);
+                    setMouseEventHandlers(rect);
                 } else if (modeChoice.getSelectedToggle() == toggleButtonCircle) {
 
                     //Circle drawing
@@ -605,11 +561,7 @@ public class DrawerFX extends Application {
                     canvas.getChildren().add(circle);
                     buffer.addAction(new DrawAction(canvas, circle));
 
-                    circle.setOnMousePressed(pressHandler);
-                    circle.setOnMouseDragged(drugHandler);
-                    circle.setOnMouseClicked(clickHandler);
-                    circle.setOnMouseEntered(enterHandler);
-                    circle.setOnMouseExited(exitHandler);
+                    setMouseEventHandlers(circle);
 
                 } else if (modeChoice.getSelectedToggle() == toggleButtonLine) {
 
@@ -624,11 +576,7 @@ public class DrawerFX extends Application {
 
                     buffer.addAction(new DrawAction(canvas, line));
 
-                    line.setOnMousePressed(pressHandler);
-                    line.setOnMouseDragged(drugHandler);
-                    line.setOnMouseClicked(clickHandler);
-                    line.setOnMouseEntered(enterHandler);
-                    line.setOnMouseExited(exitHandler);
+                    setMouseEventHandlers(line);
 
                 } else if (modeChoice.getSelectedToggle() == toggleButtonEllipse) {
 
@@ -647,11 +595,7 @@ public class DrawerFX extends Application {
                     canvas.getChildren().add(ellipse);
                     buffer.addAction(new DrawAction(canvas, ellipse));
 
-                    ellipse.setOnMousePressed(pressHandler);
-                    ellipse.setOnMouseDragged(drugHandler);
-                    ellipse.setOnMouseClicked(clickHandler);
-                    ellipse.setOnMouseEntered(enterHandler);
-                    ellipse.setOnMouseExited(exitHandler);
+                    setMouseEventHandlers(ellipse);
 
                 } else if (modeChoice.getSelectedToggle() == toggleButtonSquare) {
 
@@ -671,16 +615,20 @@ public class DrawerFX extends Application {
 
                     buffer.addAction(new DrawAction(canvas, square));
 
-                    square.setOnMousePressed(pressHandler);
-                    square.setOnMouseDragged(drugHandler);
-                    square.setOnMouseClicked(clickHandler);
-                    square.setOnMouseEntered(enterHandler);
-                    square.setOnMouseExited(exitHandler);
+                    setMouseEventHandlers(square);
 
                 }
             }
         }
     };
+
+    private void setMouseEventHandlers(Shape shape) {
+        shape.setOnMousePressed(pressHandler);
+        shape.setOnMouseDragged(drugHandler);
+        shape.setOnMouseEntered(enterHandler);
+        shape.setOnMouseExited(exitHandler);
+        shape.setOnMouseClicked(clickHandler);
+    }
 
     /**
      * Mouse event handler for MouseEvent.MOUSE_RELEASED events.
@@ -719,17 +667,11 @@ public class DrawerFX extends Application {
             ((Shape) me.getSource()).setEffect(null);
     };
 
-    /**
-     * Re-do undone action.
-     */
     private void redo() {
         Action action = buffer.getNextAction();
         action.redo();
     }
 
-    /**
-     * Undo action.
-     */
     private void undo() {
         Action action = buffer.getPreviousAction();
         action.undo();
