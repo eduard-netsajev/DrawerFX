@@ -1,9 +1,6 @@
 package drawer;
 
-import drawer.actions.Action;
-import drawer.actions.DrawAction;
-import drawer.actions.EraseAction;
-import drawer.actions.MoveAction;
+import drawer.actions.*;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -72,31 +69,6 @@ public class DrawerFX extends Application {
      * Minimum width of a stroke.
      */
     private static final Double MINSTROKE = 1.0;
-
-    /**
-     * Starting value of RED pigment in color picker.
-     */
-    private static final Integer DEFAULTRED = 0;
-
-    /**
-     * Starting value of GREEN pigment in color picker.
-     */
-    private static final Integer DEFAULTGREEN = 0;
-
-    /**
-     * Starting value of BLUE pigment in color picker.
-     */
-    private static final Integer DEFAULTBLUE = 255;
-
-    /**
-     * Maximum value for any color pigment in color picker.
-     */
-    private static final Integer MAXRGB = 255;
-
-    /**
-     * Minimum value for any color pigment in color picker.
-     */
-    private static final Integer MINRGB = 0;
 
     /**
      * Boolean value displaying whether anything is being currently drawn.
@@ -198,32 +170,13 @@ public class DrawerFX extends Application {
         Button clearButton = new ClearButton(canvas);
         VBox utilBox = new UtilityBox(clearButton, strokeSlider, fillBox);
 
-        // Build the RGB sliders, labels, and HBox containers
-        Slider redSlider = new Slider(MINRGB, MAXRGB, DEFAULTRED);
-        Label labelRed = new Label("R");
-        HBox rhbox = new HBox(5);
-        rhbox.getChildren().addAll(labelRed, redSlider);
-
-        Slider greenSlider = new Slider(MINRGB, MAXRGB, DEFAULTGREEN);
-        Label labelGreen = new Label("G");
-        HBox ghbox = new HBox(5);
-        ghbox.getChildren().addAll(labelGreen, greenSlider);
-
-        Slider blueSlider = new Slider(MINRGB, MAXRGB, DEFAULTBLUE);
-        Label labelBlue = new Label("B");
-        HBox bhbox = new HBox(5);
-        bhbox.getChildren().addAll(labelBlue, blueSlider);
-
-        // Build the VBox container for all the slider containers        
-        VBox colorBox = new VBox(10);
-        colorBox.setAlignment(Pos.TOP_CENTER);
-        colorBox.getChildren().addAll(rhbox, ghbox, bhbox);
+        ColorSlidersBox colorSlidersBox = new ColorSlidersBox();
 
         // Put all controls in one HBox
         HBox toolBox = new HBox(75);
         toolBox.setAlignment(Pos.TOP_CENTER);
         toolBox.getChildren().addAll(bufferBox, toggleBox, toggleBox2,
-                utilBox, colorBox);
+                utilBox, colorSlidersBox);
 
         // Build the sample line and its layout container
         sampleLine = new Line(0, 0, 150, 0);
@@ -232,7 +185,7 @@ public class DrawerFX extends Application {
         stackpane.setPrefHeight(MAXSTROKE);
         stackpane.getChildren().add(sampleLine);
         // Bind to the Paint Binding object
-        sampleLine.strokeProperty().bind(new SlidersColorBinding(redSlider, greenSlider, blueSlider));
+        sampleLine.strokeProperty().bind(colorSlidersBox.getSlidersColorBinding());
 
         canvas.setOnMouseClicked(clickHandler);
         canvas.setOnMousePressed(pressHandler);
@@ -665,33 +618,4 @@ public class DrawerFX extends Application {
         action.undo();
     }
 
-    @Override
-    public Pane getCanvas() {
-        return canvas;
-    }
-
-    @Override
-    public Shape getCurrentShape() {
-        return shape;
-    }
-
-    @Override
-    public boolean fillShape() {
-        return fillBox.isSelected();
-    }
-
-    @Override
-    public UsageMode getUsageMode() {
-        return null;
-    }
-
-    @Override
-    public ShapeMode getShapeMode() {
-        return null;
-    }
-
-    @Override
-    public EditHistoryBuffer getBuffer() {
-        return buffer;
-    }
 }
