@@ -15,11 +15,13 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Shape;
@@ -27,7 +29,7 @@ import javafx.stage.Stage;
 
 /**
  * Drawing application. Uses Java 8 and JavaFX features.
- * Allows for drawing strokes or rectangular shapes
+ * Allows drawing different shapes
  * of different size and color.
  * Different actions on the drawn shapes are supported:
  * 1. Moving shapes
@@ -37,6 +39,15 @@ import javafx.stage.Stage;
  * buttons or key ESCAPE and SPACE.
  */
 public class DrawerFX extends Application implements DrawerApplication {
+
+    private final String helpMessageText = "Application has two main modes:\n\n" +
+            " * 1. Drawing mode - for drawing shapes.\n" +
+            " * 2. Director mode - for executing different actions on the drawn shapes," +
+            " such as:\n" +
+            " \t\t- Moving shapes with drag of a left mouse button\n" +
+            " \t\t- Erasing shapes with a click of a right mouse button\n\n" +
+            " Actions can be undone or redone using Undo and Redo" +
+            " buttons (ESCAPE and SPACE keys respectively).";
 
     /**
      * Main pane for drawing on it.
@@ -125,13 +136,23 @@ public class DrawerFX extends Application implements DrawerApplication {
     }
 
     private void setSceneKeyboardListeners(Scene scene) {
+
+        // Prevent SPACE key from firing focused buttons
+        EventHandler<KeyEvent> filter = ke -> {
+            if (ke.getCode() == KeyCode.SPACE) {
+                ke.consume();
+                redo();
+            }
+        };
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, filter);
+
         scene.setOnKeyPressed(ke -> {
             if (ke.getCode() == KeyCode.ESCAPE) {
                 undo();
-            } else if (ke.getCode() == KeyCode.SPACE) {
-                redo();
             } else if (ke.getCode() == KeyCode.CONTROL) {
                 currentMode = director;
+            } else if (ke.getCode() == KeyCode.F1) {
+                showHelpMessage();
             }
         });
         scene.setOnKeyReleased(ke -> {
@@ -141,22 +162,39 @@ public class DrawerFX extends Application implements DrawerApplication {
         });
     }
 
+    private void showHelpMessage() {
+        Stage stage = new Stage();
+        stage.setTitle("Help");
+        BorderPane parentPane = new BorderPane(new Label(helpMessageText));
+        stage.setScene(new Scene(parentPane));
+        stage.show();
+    }
+
     private HBox createToolBox(ToggleGroup modeChoice) {
         VBox toggleBoxFirst = createFirstToolBox(modeChoice);
         VBox toggleBoxSecond = createSecondToolBox(modeChoice);
-
         VBox bufferBox = createBufferBox();
         VBox utilityBox = createUtilityBox();
-
-        ColorSlidersBox colorSlidersBox = new ColorSlidersBox();
-        sampleLine.strokeProperty().bind(colorSlidersBox.getSlidersColorBinding());
+        VBox helpAndSliders = createHelpAndSlidersBox();
 
         // Put all controls in one HBox
         HBox toolBox = new HBox(75);
         toolBox.setAlignment(Pos.TOP_CENTER);
         toolBox.getChildren().addAll(bufferBox, toggleBoxFirst, toggleBoxSecond,
-                utilityBox, colorSlidersBox);
+                utilityBox, helpAndSliders);
         return toolBox;
+    }
+
+    private VBox createHelpAndSlidersBox() {
+        ColorSlidersBox colorSlidersBox = new ColorSlidersBox();
+        sampleLine.strokeProperty().bind(colorSlidersBox.getSlidersColorBinding());
+
+        Button helpButton = new Button("Help");
+        helpButton.setOnAction(e -> showHelpMessage());
+
+        VBox helpAndSliders = new VBox(10, helpButton, colorSlidersBox);
+        helpAndSliders.setAlignment(Pos.CENTER);
+        return helpAndSliders;
     }
 
     private StackPane createSampleLineContainer() {
