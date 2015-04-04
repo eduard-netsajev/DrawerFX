@@ -13,11 +13,10 @@ public class MoveAction implements Action {
      */
     Shape shape;
 
-    /**
-     * Shape old and new coordinates.
-     */
-    Point2D oldPoint;
-    Point2D newPoint;
+    Point2D oldLayoutPoint;
+    Point2D newLayoutPoint;
+
+    Point2D originalMousePoint;
 
     /**
      * Constructor of the MoveAction object.
@@ -29,25 +28,33 @@ public class MoveAction implements Action {
 
     @Override
     public void undo() {
-        if (oldPoint != null) {
-            shape.setTranslateX(oldPoint.getX());
-            shape.setTranslateY(oldPoint.getY());
+        if (oldLayoutPoint != null) {
+            shape.setLayoutX(oldLayoutPoint.getX());
+            shape.setLayoutY(oldLayoutPoint.getY());
         }
     }
 
     @Override
     public void redo() {
-        if (newPoint != null) {
-            shape.setTranslateX(newPoint.getX());
-            shape.setTranslateY(newPoint.getY());
+        if (newLayoutPoint != null) {
+            shape.setLayoutX(newLayoutPoint.getX());
+            shape.setLayoutY(newLayoutPoint.getY());
         }
     }
 
-    public void setOldPoint(Point2D oldPoint) {
-        this.oldPoint = oldPoint;
+    public void setOldLayoutPoint(Point2D oldLayoutPoint) {
+        this.oldLayoutPoint = oldLayoutPoint;
     }
 
-    public void setNewPoint(Point2D newPoint) {
-        this.newPoint = newPoint;
+    public void setNewLayoutPoint(Point2D newLayoutPoint) {
+        this.newLayoutPoint = newLayoutPoint;
+    }
+
+    public void setOriginalMousePoint(Point2D originalMousePoint) {
+        this.originalMousePoint = originalMousePoint;
+    }
+
+    public Point2D getOriginalMousePoint() {
+        return originalMousePoint;
     }
 }

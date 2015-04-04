@@ -104,16 +104,6 @@ public class DrawerFX extends Application {
     private boolean drawingShape = false;
 
     /**
-     * Moving action cursor starting X and Y coordinates.
-     */
-    private double orgSceneX, orgSceneY;
-
-    /**
-     * Moving action shape starting X and Y coordinates.
-     */
-    private double orgTranslateX, orgTranslateY;
-
-    /**
      * Boolean value for displaying director or drawer modes.
      */
     private boolean dirMode = false;
@@ -320,19 +310,24 @@ public class DrawerFX extends Application {
             }
             if (dirMode) {
                 if (me.getSource() instanceof Shape) {
-                    double offsetX = me.getSceneX() - orgSceneX;
-                    double offsetY = me.getSceneY() - orgSceneY;
-                    double newTranslateX = orgTranslateX + offsetX;
-                    double newTranslateY = orgTranslateY + offsetY;
-
-                    ((Shape) me.getSource()).setTranslateX(newTranslateX);
-                    ((Shape) me.getSource()).setTranslateY(newTranslateY);
-
                     Action previousAction = buffer.peekPreviousAction();
                     if (previousAction instanceof MoveAction) {
-                        Point2D newPoint = new Point2D(newTranslateX, newTranslateY);
-                        MoveAction ma = (MoveAction) previousAction;
-                        ma.setNewPoint(newPoint);
+                        MoveAction moveAction = (MoveAction) previousAction;
+
+                        Point2D originalMousePoint = moveAction.getOriginalMousePoint();
+
+                        double offsetX = me.getX() - originalMousePoint.getX();
+                        double offsetY = me.getY() - originalMousePoint.getY();
+
+                        Shape shape = ((Shape) me.getSource());
+                        double newLayoutX = shape.getLayoutX() + offsetX;
+                        double newLayoutY = shape.getLayoutY() + offsetY;
+
+                        shape.setLayoutX(newLayoutX);
+                        shape.setLayoutY(newLayoutY);
+
+                        Point2D newPoint = new Point2D(newLayoutX, newLayoutY);
+                        moveAction.setNewLayoutPoint(newPoint);
                     }
                 }
             } else {
@@ -489,17 +484,17 @@ public class DrawerFX extends Application {
                 return;
             }
             if (dirMode) {
-                orgSceneX = me.getSceneX();
-                orgSceneY = me.getSceneY();
 
                 if (me.getSource() instanceof Shape) {
 
-                    orgTranslateX = ((Shape) me.getSource()).getTranslateX();
-                    orgTranslateY = ((Shape) me.getSource()).getTranslateY();
+                    Shape shape = ((Shape) me.getSource());
+                    MoveAction moveAction = new MoveAction(shape);
 
-                    Point2D oldPoint = new Point2D(orgTranslateX, orgTranslateY);
-                    MoveAction moveAction = new MoveAction((Shape) me.getSource());
-                    moveAction.setOldPoint(oldPoint);
+                    Point2D originalPoint = new Point2D(me.getX(), me.getY());
+                    moveAction.setOriginalMousePoint(originalPoint);
+
+                    Point2D oldLayoutPoint = new Point2D(shape.getLayoutX(), shape.getLayoutY());
+                    moveAction.setOldLayoutPoint(oldLayoutPoint);
 
                     buffer.addAction(moveAction);
                 }
@@ -668,5 +663,35 @@ public class DrawerFX extends Application {
     private void undo() {
         Action action = buffer.getPreviousAction();
         action.undo();
+    }
+
+    @Override
+    public Pane getCanvas() {
+        return canvas;
+    }
+
+    @Override
+    public Shape getCurrentShape() {
+        return shape;
+    }
+
+    @Override
+    public boolean fillShape() {
+        return fillBox.isSelected();
+    }
+
+    @Override
+    public UsageMode getUsageMode() {
+        return null;
+    }
+
+    @Override
+    public ShapeMode getShapeMode() {
+        return null;
+    }
+
+    @Override
+    public EditHistoryBuffer getBuffer() {
+        return buffer;
     }
 }
